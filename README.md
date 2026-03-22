@@ -98,8 +98,9 @@ Price & Provider Analysis (analyses/check_pricing_analysis.sql):
 Used to monitor average prices across service providers (airlines/hotels).
 
 ### **dbt Execution Result (PASS=7)**
-![dbt Run Result](order_transaction_result.png)
+![dbt Run Result](order_transaction_result.png) 
 Figure 4: average prices across service providers (airlines/hotels).
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 This report serves as complete documentation of the PacTravel Data Warehouse development process. All scripts, dbt models, and visual assets are available in this repository for further verification.
 
