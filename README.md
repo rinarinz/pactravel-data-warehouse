@@ -46,6 +46,9 @@ Menerapkan SCD (Slowly Changing Dimension) Type 2 pada dimensi pelanggan (dim_cu
 Diagram Data Warehouse: ERD
 Gambar 1: Visualisasi Star Schema di DBeaver. Tabel fakta pusat terhubung ke semua dimensi melalui 6 jalur Virtual Foreign Key.
 
+### **Hasil ERD (Entity Relationship Diagram)**
+![ERD Star Schema](ERD.png)
+
 Step #3 - Data Pipeline Implementation (50 Points)
 Workflow
 Pipeline ini mengimplementasikan alur kerja ELT modern:
@@ -76,12 +79,21 @@ Verifikasi Rute & Join Dimensi (analyses/check_flight_origin_destination_data.sq
 Script ini memastikan tabel fakta telah berhasil menarik data nama kota dari dim_airports.
 Gambar 2: Hasil validasi rute. Nama kota pada origin dan destination muncul dengan benar untuk tipe 'flight'.
 
+### **Hasil Validasi Rute Penerbangan**
+![Route Analysis Result](check_origin_destination_data.png)
+
 Verifikasi Volume Harian (analyses/check_daily_volume.sql):
 Memastikan data pada fct_daily_total telah teragregasi secara akurat per hari.
 Gambar 3: Ringkasan pendapatan harian untuk memantau performa bisnis.
 
+### **Hasil Validasi Volume Harian**
+![Daily Total Result](daily_total_result.png)
+
 Analisis Harga & Provider (analyses/check_pricing_analysis.sql):
 Digunakan untuk memantau harga rata-rata antar penyedia layanan (maskapai/hotel).
+
+### **Hasil Eksekusi dbt (PASS=7)**
+![dbt Run Result](order_transaction_result.png)
 
 Laporan ini disusun sebagai dokumentasi lengkap atas proses pembangunan Data Warehouse PacTravel. Seluruh skrip, model dbt, dan aset visual tersedia di repositori ini untuk diverifikasi lebih lanjut.
 
