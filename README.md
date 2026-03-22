@@ -44,9 +44,12 @@ SCD Strategy:
 Implementing SCD (Slowly Changing Dimension) Type 2 on the customer dimension (dim_customers) to track data change history (e.g., changes in domicile), ensuring that historical data integrity in the fact tables remains accurate.
 
 Data Warehouse Diagram: ERD
-Figure 1: Star Schema visualization in DBeaver. The central fact table connects to all dimensions via 6 Virtual Foreign Key paths.
+
 ### **ERD (Entity Relationship Diagram)**
 ![ERD Star Schema](ERD.png)
+
+Figure 1: Star Schema visualization in DBeaver. 
+The central fact table connects to all dimensions via 6 Virtual Foreign Key paths.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Step #3 - Data Pipeline Implementation 
 Workflow
@@ -76,23 +79,27 @@ To prove the pipeline operates according to business requirements, several valid
 
 Route Verification & Dimension Join (analyses/check_flight_origin_destination_data.sql):
 This script ensures the fact table successfully retrieved city names from dim_airports.
-Figure 2: Route validation results. City names for origin and destination appear correctly for the 'flight' type.
 
 ### **Flight Routes Validation Result**
 ![Route Analysis Result](check_origin_destination_data.png)
 
+Figure 2: Route validation results. 
+City names for origin and destination appear correctly for the 'flight' type.
+
 Daily Volume Verification (analyses/check_daily_volume.sql):
 Ensures that data in fct_daily_total has been accurately aggregated per day.
-Figure 3: Daily revenue summary for monitoring business performance.
+
 
 ### **Daily Revenue Result Validation**
 ![Daily Total Result](daily_total_result.png)
+Figure 3: Daily revenue summary for monitoring business performance.
 
 Price & Provider Analysis (analyses/check_pricing_analysis.sql):
 Used to monitor average prices across service providers (airlines/hotels).
 
 ### **dbt Execution Result (PASS=7)**
 ![dbt Run Result](order_transaction_result.png)
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 This report serves as complete documentation of the PacTravel Data Warehouse development process. All scripts, dbt models, and visual assets are available in this repository for further verification.
 
