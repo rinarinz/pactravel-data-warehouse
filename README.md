@@ -2,109 +2,112 @@
 
 Step #1 - Requirements Gathering 
 Description of Data Source
-Data utama berasal dari sistem operasional PacTravel yang mencakup ekosistem perjalanan menyeluruh:
+The primary data is sourced from the PacTravel operational system, which encompasses a comprehensive travel ecosystem:
 
-1. Data Master: Terdiri dari informasi pelanggan (customers), maskapai (airlines), hotel, bandara (airports), dan armada pesawat (aircrafts).
+Master Data: Consists of information regarding customers, airlines, hotels, airports, and aircraft fleets.
 
-2. Data Transaksi: Berupa catatan pemesanan terpisah untuk tiket pesawat (flight_bookings) dan reservasi penginapan (hotel_bookings).
+Transactional Data: Separate booking records for flight tickets (flight_bookings) and hotel reservations (hotel_bookings).
 
-Format & Konteks: Data disimpan dalam format relasional PostgreSQL. Tantangan utama terletak pada struktur data yang terfragmentasi, sehingga memerlukan proses integrasi untuk menghasilkan laporan yang komprehensif.
+Format & Context: Data is stored in a PostgreSQL relational format. The main challenge lies in the fragmented data structure, necessitating an integration process to produce comprehensive analytical reports.
 
 Problem
-Stakeholder PacTravel saat ini kesulitan dalam:
+PacTravel stakeholders currently face challenges in:
 
-1. Fragmentasi Data: Informasi transaksi hotel dan penerbangan berada pada tabel yang berbeda, menghalangi pandangan holistik terhadap performa bisnis harian.
+Data Fragmentation: Hotel and flight transaction information reside in different tables, preventing a holistic view of daily business performance.
 
-1. Analisis Terpadu: Tidak adanya sistem otomatis untuk memantau fluktuasi harga tiket dan volume pemesanan antar rute secara real-time.
+Lack of Integrated Analysis: The absence of an automated system to monitor ticket price fluctuations and booking volumes across routes in real-time.
 
 Solution
-Membangun infrastruktur Data Warehouse dengan skema Star Schema dan pipeline ELT (Extract, Load, Transform). Pipeline ini akan menyatukan data mentah ke dalam tabel dimensi dan fakta yang siap digunakan untuk kueri analitik kompleks.
-
+Developing a Data Warehouse infrastructure using a Star Schema and an ELT (Extract, Load, Transform) pipeline. This pipeline will unify raw data into dimension and fact tables that are ready for complex analytical queries.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Step #2 - Designing Data Warehouse Model 
 Dimensional Model Process
-Select Business Process: Order Transaction (Proses pemesanan layanan travel).
+Select Business Process: Order Transaction (Travel service booking process).
 
 Declare Grain:
 
-1. Tingkat Detail (Atomic): Satu baris data mewakili satu transaksi produk (penerbangan/hotel) oleh pelanggan.
+1. Atomic Level: Each row represents a single product transaction (flight/hotel) by a customer.
 
-2. Tingkat Ringkasan (Aggregate): Satu baris data mewakili total transaksi harian untuk setiap kategori produk.
+2. Aggregate Level: Each row represents the total daily transactions for each product category.
 
-Identify The Dimension:
+Identify The Dimensions:
 dim_customers, dim_hotels, dim_airlines, dim_airports, dim_aircrafts.
 
-Identify The Fact:
-Dalam desain ini, digunakan dua jenis tabel fakta untuk memenuhi kebutuhan analisis yang berbeda:
+Identify The Facts:
+In this design, two types of fact tables are used to meet different analytical needs:
 
-fct_order_transaction (Transaction Fact Table): Menyimpan setiap detail transaksi secara granular. Digunakan untuk analisis mendalam seperti performa rute bandara atau efisiensi armada pesawat.
+1. fct_order_transaction (Transaction Fact Table): Stores every transaction detail at a granular level. Used for deep analysis such as airport route performance or aircraft fleet efficiency.
 
-fct_daily_total (Aggregated Fact Table): Menyimpan ringkasan harian. Tabel ini dirancang untuk mempercepat performa laporan eksekutif terkait tren pendapatan dan volume transaksi tanpa harus memproses jutaan data detail setiap saat.
+2. fct_daily_total (Aggregated Fact Table): Stores daily summaries. This table is designed to accelerate executive reporting performance regarding revenue trends and transaction volumes without processing millions of detailed records every time.
 
 SCD Strategy:
-Menerapkan SCD (Slowly Changing Dimension) Type 2 pada dimensi pelanggan (dim_customers) untuk melacak riwayat perubahan data (seperti perubahan domisili), guna memastikan integritas data historis di tabel fakta tetap akurat.
+Implementing SCD (Slowly Changing Dimension) Type 2 on the customer dimension (dim_customers) to track data change history (e.g., changes in domicile), ensuring that historical data integrity in the fact tables remains accurate.
 
-Diagram Data Warehouse: ERD
-Gambar 1: Visualisasi Star Schema di DBeaver. Tabel fakta pusat terhubung ke semua dimensi melalui 6 jalur Virtual Foreign Key.
-
-### **Hasil ERD (Entity Relationship Diagram)**
+Data Warehouse Diagram: ERD
+Figure 1: Star Schema visualization in DBeaver. The central fact table connects to all dimensions via 6 Virtual Foreign Key paths.
+### **ERD (Entity Relationship Diagram)**
 ![ERD Star Schema](ERD.png)
-
-Step #3 - Data Pipeline Implementation (50 Points)
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Step #3 - Data Pipeline Implementation 
 Workflow
-Pipeline ini mengimplementasikan alur kerja ELT modern:
+This pipeline implements a modern ELT workflow:
 
-1. Extract & Load: Data diekstraksi dari database operasional dan dimuat ke skema staging di Data Warehouse menggunakan Python (main.py) yang berjalan di dalam environment Docker.
+1. Extract & Load: Data is extracted from the operational database and loaded into the staging schema in the Data Warehouse using Python (main.py) running within a Docker environment.
 
-2. Transform: Menggunakan dbt (data build tool) untuk memproses data dari staging ke skema final.
+2. Transform: Utilizing dbt (data build tool) to process data from staging to the final schema.
 
-3. Proses: Pembersihan tipe data (terutama penanganan ID pesawat yang mengandung string), penggabungan data (UNION ALL), dan denormalisasi atribut (seperti menyertakan nama kota asal dan tujuan langsung di tabel fakta).
+3. Process: Data type cleansing (specifically handling aircraft IDs containing strings), data unification (UNION ALL), and attribute denormalization (such as including origin and destination city names directly in the fact table).
 
-Scheduling & Alerting
-1. Scheduling: Untuk saat ini dijalankan secara manual via CLI dbt. Arsitektur ini siap dijadwalkan menggunakan Apache Airflow atau GitHub Actions untuk automasi produksi.
+4. Scheduling & Alerting
+Scheduling: Currently executed manually via the dbt CLI. This architecture is ready to be scheduled using Apache Airflow or GitHub Actions for production automation.
 
-2. Alerting: Pengecekan kualitas data terintegrasi dalam log dbt. Kegagalan pada salah satu model akan menghentikan proses downstream secara otomatis untuk mencegah inkonsistensi data.
+5.Alerting: Data quality checks are integrated within dbt logs. A failure in any model will automatically stop downstream processes to prevent data inconsistency.
 
 Code Repository Structure
-Folder utama transformasi berada di: /pactravel_transform
-Kueri analisis validasi berada di: /pactravel_transform/analyses/
-
+Primary transformation folder: /pactravel_transform
+Validation analysis queries: /pactravel_transform/analyses/
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Step #4 - Show Results of the Pipeline 
-1. Berhasil Menjalankan dbt (PASS=7)
-Eksekusi pipeline menunjukkan seluruh 7 model (5 dimensi dan 2 fakta) berhasil dibuat dengan sempurna.
+1. Successful dbt Execution (PASS=7)
+The pipeline execution shows that all 7 models (5 dimensions and 2 facts) were created perfectly.
 
-2. Hasil Validasi Data Melalui Script SQL
-Untuk membuktikan pipeline berjalan sesuai persyaratan bisnis, beberapa kueri validasi dijalankan menggunakan file SQL yang tersimpan di folder analyses:
+2. Data Validation Results via SQL Scripts
+To prove the pipeline operates according to business requirements, several validation queries were executed using SQL files stored in the analyses folder:
 
-Verifikasi Rute & Join Dimensi (analyses/check_flight_origin_destination_data.sql):
-Script ini memastikan tabel fakta telah berhasil menarik data nama kota dari dim_airports.
-Gambar 2: Hasil validasi rute. Nama kota pada origin dan destination muncul dengan benar untuk tipe 'flight'.
+Route Verification & Dimension Join (analyses/check_flight_origin_destination_data.sql):
+This script ensures the fact table successfully retrieved city names from dim_airports.
+Figure 2: Route validation results. City names for origin and destination appear correctly for the 'flight' type.
 
-### **Hasil Validasi Rute Penerbangan**
+### **Flight Routes Validation Result**
 ![Route Analysis Result](check_origin_destination_data.png)
 
-Verifikasi Volume Harian (analyses/check_daily_volume.sql):
-Memastikan data pada fct_daily_total telah teragregasi secara akurat per hari.
-Gambar 3: Ringkasan pendapatan harian untuk memantau performa bisnis.
+Daily Volume Verification (analyses/check_daily_volume.sql):
+Ensures that data in fct_daily_total has been accurately aggregated per day.
+Figure 3: Daily revenue summary for monitoring business performance.
 
-### **Hasil Validasi Volume Harian**
+### **Daily Revenue Result Validation**
 ![Daily Total Result](daily_total_result.png)
 
-Analisis Harga & Provider (analyses/check_pricing_analysis.sql):
-Digunakan untuk memantau harga rata-rata antar penyedia layanan (maskapai/hotel).
+Price & Provider Analysis (analyses/check_pricing_analysis.sql):
+Used to monitor average prices across service providers (airlines/hotels).
 
-### **Hasil Eksekusi dbt (PASS=7)**
+### **dbt Execution Result (PASS=7)**
 ![dbt Run Result](order_transaction_result.png)
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+This report serves as complete documentation of the PacTravel Data Warehouse development process. All scripts, dbt models, and visual assets are available in this repository for further verification.
 
-Laporan ini disusun sebagai dokumentasi lengkap atas proses pembangunan Data Warehouse PacTravel. Seluruh skrip, model dbt, dan aset visual tersedia di repositori ini untuk diverifikasi lebih lanjut.
+🚀 How to Run the Pipeline
+Preparation: Ensure Docker is running.
 
-🚀 Cara Menjalankan Pipeline
-Persiapan: Pastikan Docker telah berjalan.
+Replicate Database: Run ```docker-compose up -d```
 
-Replikasi Database: Jalankan ```docker-compose up -d``` 
+Initiate Data: Run ```python main.py```
 
-Inisiasi Data: Jalankan ```python main.py```
-
-Transformasi Data:
+Transform Data:
+```
+cd pactravel_transform
+python -m dbt.cli.main run
+```
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # PACTRAVEL - ELT Pipeline Orhcestration For Exercise 3
 ## How to use this Data?
@@ -125,14 +128,14 @@ Transformasi Data:
 - **Create .env file** in project root directory :
   ```
     # Source
-    SRC_POSTGRES_DB=pactravel
+    SRC_POSTGRES_DB=pactravel   ----->change into "pactravel_src"
     SRC_POSTGRES_HOST=localhost
     SRC_POSTGRES_USER=postgres
     SRC_POSTGRES_PASSWORD=mypassword
     SRC_POSTGRES_PORT=5433
 
     # DWH
-    DWH_POSTGRES_DB=pactravel-dwh
+    DWH_POSTGRES_DB=pactravel-dwh ----->change into "pactravel_dwh"
     DWH_POSTGRES_HOST=localhost
     DWH_POSTGRES_USER=postgres
     DWH_POSTGRES_PASSWORD=mypassword
